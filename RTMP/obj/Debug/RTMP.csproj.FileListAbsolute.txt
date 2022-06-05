@@ -1,0 +1,6 @@
+C:\Users\Ben\RiderProjects\RTMP\RTMP\bin\Debug\RTMP.exe
+C:\Users\Ben\RiderProjects\RTMP\RTMP\bin\Debug\RTMP.pdb
+C:\Users\Ben\RiderProjects\RTMP\RTMP\obj\Debug\RTMP.csproj.AssemblyReference.cache
+C:\Users\Ben\RiderProjects\RTMP\RTMP\obj\Debug\RTMP.csproj.CoreCompileInputs.cache
+C:\Users\Ben\RiderProjects\RTMP\RTMP\obj\Debug\RTMP.exe
+C:\Users\Ben\RiderProjects\RTMP\RTMP\obj\Debug\RTMP.pdb
