@@ -44,7 +44,6 @@ namespace RTMP
                     List<byte> newChunk = new List<byte>();
                     newChunk.AddRange(new BasicHeader(0, 2).Encode());
                     newChunk.AddRange(new ChunkHeader0(0, 4, 5, 0).Encode());
-                    // Convert 5000000 to big endian bytes
                     newChunk.AddRange(BitConverter.GetBytes(5000000).Reverse());
                     RTMPClient.stream.Write(newChunk.ToArray(), 0, newChunk.Count);
                     
@@ -59,10 +58,44 @@ namespace RTMP
                     newChunk.AddRange(new BasicHeader(0, 2).Encode());
                     newChunk.AddRange(new ChunkHeader0(0, 4, 1, 0).Encode());
                     newChunk.AddRange(BitConverter.GetBytes(5000).Reverse());
-                    newChunk.Add(1);
                     RTMPClient.stream.Write(newChunk.ToArray(), 0, newChunk.Count);
+
+                    newChunk.Clear();
+
+                    List<byte> data = new List<byte>();
+                    data.Add(2);
+                    data.AddRange(new AMFString().Encode("_result"));
+                    data.Add(0);
+                    data.AddRange(new AMFNumber().Encode(1));
                     
+                    data.Add(3);
+                    data.AddRange(new AMFString().Encode("fmsVer"));
+                    data.Add(2);
+                    data.AddRange(new AMFString().Encode("FMS/3,0,1,123"));
+                    data.AddRange(new AMFString().Encode("capabilities"));
+                    data.Add(0);
+                    data.AddRange(new AMFNumber().Encode(31));
+                    data.AddRange(new byte[]{0,0,9});
                     
+                    data.Add(3);
+                    data.AddRange(new AMFString().Encode("level"));
+                    data.Add(2);
+                    data.AddRange(new AMFString().Encode("status"));
+                    data.AddRange(new AMFString().Encode("code"));
+                    data.Add(2);
+                    data.AddRange(new AMFString().Encode("NetConnection.Connect.Success"));
+                    data.AddRange(new AMFString().Encode("description"));
+                    data.Add(2);
+                    data.AddRange(new AMFString().Encode("Connection succeeded"));
+                    data.AddRange(new AMFString().Encode("objectEncoding"));
+                    data.Add(0);
+                    data.AddRange(new AMFNumber().Encode(0));
+                    data.AddRange(new byte[]{0,0,9});
+                    
+                    newChunk.AddRange(new BasicHeader(0, 3).Encode());
+                    newChunk.AddRange(new ChunkHeader0(0, data.Count, 20, 0).Encode());
+                    newChunk.AddRange(data);
+                    RTMPClient.stream.Write(newChunk.ToArray(), 0, newChunk.Count);
                 }
                 return;
             }

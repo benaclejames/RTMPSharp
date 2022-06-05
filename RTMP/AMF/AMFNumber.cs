@@ -12,5 +12,11 @@ namespace RTMP
             offset += 8;
             return BitConverter.ToDouble(number.Reverse().ToArray(), 0);
         }
+        
+        public byte[] Encode(double value)
+        {
+            byte[] number = BitConverter.GetBytes(value);
+            return number.Reverse().ToArray();
+        }
     }
 }

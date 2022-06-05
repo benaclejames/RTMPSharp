@@ -17,5 +17,16 @@ namespace RTMP
             offset += len + 2;
             return Encoding.UTF8.GetString(bytes, readOffset, len);
         }
+
+        public byte[] Encode(string value)
+        {
+            // Get the length of the string in 2 bytes
+            byte[] strLen = BitConverter.GetBytes((short)value.Length).Reverse().ToArray();
+            var strBytes = Encoding.UTF8.GetBytes(value);
+            var bytes = new byte[strBytes.Length + 2];
+            Array.Copy(strLen, 0, bytes, 0, strLen.Length);
+            Array.Copy(strBytes, 0, bytes, 2, strBytes.Length);
+            return bytes;
+        }
     }
 }
