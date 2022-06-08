@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Linq;
+using System.Net.Sockets;
 
 namespace RTMP.RTMPCommandMessage
 {
@@ -12,6 +13,7 @@ namespace RTMP.RTMPCommandMessage
         private int messageStreamId;
         
         protected byte[] data;
+
         
         public RTMPMessage(int fmt, int csid, int timestamp, short typeID, int messageStreamId)
         {
@@ -24,10 +26,12 @@ namespace RTMP.RTMPCommandMessage
             data = Array.Empty<byte>();
         }
 
-        public byte[] Encode()
+        public virtual void Enqueue(NetworkStream stream)
         {
             var header = new ChunkHeader(fmt, csid, timestamp, data.Length, typeID, messageStreamId);
-            return header.Encode().Concat(data).ToArray();
+            var chunk = header.Encode().Concat(data).ToArray();
+            stream.Write(chunk, 0, chunk.Length);
         }
+        
     }
 }

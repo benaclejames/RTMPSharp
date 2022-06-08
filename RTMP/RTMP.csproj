@@ -39,11 +39,11 @@
     </ItemGroup>
     <ItemGroup>
         <Compile Include="AMF\AMFBoolean.cs" />
-        <Compile Include="AMF\AMFClass.cs" />
-        <Compile Include="AMF\AMFMessage.cs" />
-        <Compile Include="AMF\AMFNull.cs" />
+        <Compile Include="AMF\AMFType.cs" />
+        <Compile Include="AMF\AMF0.cs" />
         <Compile Include="AMF\AMFNumber.cs" />
         <Compile Include="AMF\AMFObject.cs" />
+        <Compile Include="AMF\AMFProperty.cs" />
         <Compile Include="AMF\AMFString.cs" />
         <Compile Include="ChunkTypes\Handshake\CS0.cs" />
         <Compile Include="ChunkTypes\Handshake\CS1.cs" />
@@ -55,10 +55,14 @@
         <Compile Include="Program.cs" />
         <Compile Include="Properties\AssemblyInfo.cs" />
         <Compile Include="RTMPClient.cs" />
+        <Compile Include="RTMPCommandMessage\AMFSerializeable.cs" />
         <Compile Include="RTMPCommandMessage\CommandMessage.cs" />
         <Compile Include="RTMPCommandMessage\ConnectMessage.cs" />
-        <Compile Include="RTMPCommandMessage\ResultMessage.cs" />
+        <Compile Include="RTMPCommandMessage\ResultCommandMessage.cs" />
         <Compile Include="RTMPCommandMessage\RTMPMessage.cs" />
+        <Compile Include="RTMPCommandMessage\SetChunkSize.cs" />
+        <Compile Include="RTMPCommandMessage\SetPeerBandwidth.cs" />
+        <Compile Include="RTMPCommandMessage\WindowAckSize.cs" />
     </ItemGroup>
     <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
     <!-- To modify your build process, add your task inside one of the targets below and uncomment it. 

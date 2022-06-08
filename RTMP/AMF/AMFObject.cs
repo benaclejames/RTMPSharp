@@ -1,30 +1,44 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Linq;
 
 namespace RTMP
 {
-    public class AMFObject : AMFClass
+    public class AMFObject : AMFType<List<AMFProperty>>
     {
-        public Type Type => typeof(object);
-
-        public Dictionary<string, object> Values = new Dictionary<string, object>();
-        private readonly AMFString _stringReader = new AMFString();
-
-        public void ReadPair(byte[] bytes, ref int offset, string overrideName = null)
+        public override List<AMFProperty> Parse(ref byte[] bytes)
         {
-            string key = overrideName ?? (string) _stringReader.Parse(bytes, ref offset);
-            object value = AMFMessage.Read(bytes, ref offset);
+            while (bytes[2] != 0x09)
+                Value.Add(new AMFProperty(ref bytes));
 
-            Values.Add(key, value);
+            // remove the last 3
+            bytes = bytes.Skip(3).ToArray();
+            return Value;
         }
 
-        public object Parse(byte[] bytes, ref int offset)
+        public override byte[] Serialize(bool withKey = true)
         {
-            // While the next two bytes are not 0x00
-            while (bytes[offset+2] != 0x09)
-                ReadPair(bytes, ref offset);
+            var retList = new List<byte>();
+            retList.Add(0x03);
+            foreach (var prop in Value)
+            {
+                retList.AddRange(prop.Key.Serialize(false));
+                retList.AddRange(prop.Value.Serialize());
+            }
+            retList.AddRange(new byte[] {0x00, 0x00, 0x09});
 
-            return Values;
+            return retList.ToArray();
+        }
+
+        public AMFObject(List<AMFProperty> value) : base(value)
+        {
+        }
+        
+        public AMFObject(ref byte[] data) : base(new List<AMFProperty>())
+        {
+            data = data.Skip(1).ToArray();
+            
+            Value = Parse(ref data);
         }
     }
 }

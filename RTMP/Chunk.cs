@@ -17,34 +17,23 @@ namespace RTMP
             
             if (header.TypeID == 20) // AMF Encoding
             {
-                int offset = 0;
-                var msg = new AMFMessage(data, ref offset);
-                Console.WriteLine("Recv AMF0 Message: " + (string) msg.Objects[0]);
-                if ((string) msg.Objects[0] == "connect")
+                var msg = AMF0.Decode(data);
+                var command = (string) msg.Objects[0].GetValue;
+                Console.WriteLine("Received AMF0 Command: " + command);
+                if (command == "connect")
                 {
-                    List<byte> connectChunk = new List<byte>();
-                    connectChunk.AddRange(new ChunkHeader(0, 2, 0, 4, 5, 0).Encode());
-                    connectChunk.AddRange(BitConverter.GetBytes(5000000).Reverse());
-                    RTMPClient.stream.Write(connectChunk.ToArray(), 0, connectChunk.Count);
+                    var winAckSize = new WindowAckSize(5000000);
+                    var peerBandwidth = new SetPeerBandwidth(5000000, 1);
+                    var setChunkSize = new SetChunkSize(5000);
+                    var connectMsg = new ConnectMessage();
                     
-                    connectChunk.Clear();
-                    connectChunk.AddRange(new ChunkHeader(0, 2, 0, 5, 6, 0).Encode());
-                    connectChunk.AddRange(BitConverter.GetBytes(5000000).Reverse());
-                    connectChunk.Add(1);
-                    RTMPClient.stream.Write(connectChunk.ToArray(), 0, connectChunk.Count);
-                    
-                    connectChunk.Clear();
-                    connectChunk.AddRange(new ChunkHeader(0, 2, 0, 4, 1, 0).Encode());
-                    connectChunk.AddRange(BitConverter.GetBytes(5000).Reverse());
-                    RTMPClient.stream.Write(connectChunk.ToArray(), 0, connectChunk.Count);
-
-                    connectChunk.Clear();
-                    
-                    var connectMsg = new ConnectMessage().Encode();
-                    RTMPClient.stream.Write(connectMsg, 0, connectMsg.Length);
+                    winAckSize.Enqueue(RTMPClient.stream);
+                    peerBandwidth.Enqueue(RTMPClient.stream);
+                    setChunkSize.Enqueue(RTMPClient.stream);
+                    connectMsg.Enqueue(RTMPClient.stream);
                 }
 
-                if ((string) msg.Objects[0] == "createStream")
+               /* if ((string) msg.Objects[0] == "createStream")
                 {
                     List<byte> createStreamAMF = new List<byte>();
                     List<byte> createStreamChunk = new List<byte>();
@@ -86,7 +75,7 @@ namespace RTMP
                     publishChunk.AddRange(publishAMF);
                     RTMPClient.stream.Write(publishChunk.ToArray(), 0, publishChunk.Count);
                     return;
-                }
+                }*/
             }
         }
     }

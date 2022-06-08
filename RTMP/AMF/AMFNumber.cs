@@ -1,22 +1,37 @@
 ﻿using System;
+using System.Collections.Generic;
 using System.Linq;
 
 namespace RTMP
 {
-    public class AMFNumber : AMFClass
+    public class AMFNumber : AMFType<double>
     {
-        public Type Type => typeof(double);
-        public object Parse(byte[] bytes, ref int offset)
+        public override double Parse(ref byte[] bytes)
         {
-            byte[] number = bytes.Skip(offset).Take(8).ToArray();
-            offset += 8;
+            var number = bytes.Take(8);
+            bytes = bytes.Skip(8).ToArray();
             return BitConverter.ToDouble(number.Reverse().ToArray(), 0);
         }
-        
-        public byte[] Encode(double value)
+
+        public override byte[] Serialize(bool withKey = true)
         {
-            byte[] number = BitConverter.GetBytes(value);
-            return number.Reverse().ToArray();
+            var retArr = new List<byte>();
+            if (withKey)
+                retArr.Add(TypeByte);
+            retArr.AddRange(BitConverter.GetBytes(Value).Reverse());
+            return retArr.ToArray();
+        }
+
+        public AMFNumber(double value) : base(value)
+        {
+        }
+        
+        public AMFNumber(ref byte[] data) : base(0)
+        {
+            if (data[0] == TypeByte)
+                data = data.Skip(1).ToArray();
+            
+            Value = Parse(ref data);
         }
     }
 }
