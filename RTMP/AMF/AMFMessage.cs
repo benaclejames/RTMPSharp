@@ -13,7 +13,8 @@ namespace RTMP
             {0x00, typeof(double)},
             {0x01, typeof(bool)},
             {0x02, typeof(string)},
-            {0x03, typeof(object)}
+            {0x03, typeof(object)},
+            {0x05, typeof(Nullable)}
         };
         
         public static AMFClass GetAMFClass(Type type)
@@ -39,9 +40,15 @@ namespace RTMP
 
         public AMFMessage(byte[] amfBytes, ref int offset)
         {
-            Objects.Add(Read(amfBytes, ref offset));
-            Objects.Add(Read(amfBytes, ref offset));
-            Objects.Add(Read(amfBytes, ref offset));
+            while (offset < amfBytes.Length)
+                try
+                {
+                    Objects.Add(Read(amfBytes, ref offset));
+                }
+                catch
+                {
+                    return;
+                }
         }
     }
 }

@@ -1,106 +1,93 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
-using System.Text;
+using RTMP.RTMPCommandMessage;
 
 namespace RTMP
 {
-    public class Chunk
+    public static class Chunk
     {
-        public BasicHeader header;
-        public static ChunkHeader0 lastMessageHeader;
-        public object data;
-
-        public static ChunkHeader0 GetMessageHeader(BasicHeader basic, byte[] headerBytes, ref int offset)
+        public static void Decode(ChunkHeader header, byte[] data)
         {
-            switch (basic.ChunkHeaderFormat)
+            if (header.csid == 2) // Control Messages
             {
-                case 0:
-                    lastMessageHeader = new ChunkHeader0(headerBytes, ref offset);
-                    return lastMessageHeader;
-                case 3:
-                    return lastMessageHeader;
-            }
-
-            return null;
-        }
-        
-        public Chunk(byte[] chunk, ref int offset)
-        {
-            header = new BasicHeader(chunk, ref offset);
-            var messageHeader = GetMessageHeader(header, chunk, ref offset);
-            
-            if (header.CSID == 2) // Control Messages
-            {
-                ControlMessageHandler.Handle(chunk, messageHeader, ref offset);
+                ControlMessageHandler.Handle(data, header);
                 return;
             }
             
-            if (messageHeader.TypeID == 20) // AMF Encoding
+            if (header.TypeID == 20) // AMF Encoding
             {
-                var msg = new AMFMessage(chunk, ref offset);
+                int offset = 0;
+                var msg = new AMFMessage(data, ref offset);
+                Console.WriteLine("Recv AMF0 Message: " + (string) msg.Objects[0]);
                 if ((string) msg.Objects[0] == "connect")
                 {
-                    List<byte> newChunk = new List<byte>();
-                    newChunk.AddRange(new BasicHeader(0, 2).Encode());
-                    newChunk.AddRange(new ChunkHeader0(0, 4, 5, 0).Encode());
-                    newChunk.AddRange(BitConverter.GetBytes(5000000).Reverse());
-                    RTMPClient.stream.Write(newChunk.ToArray(), 0, newChunk.Count);
+                    List<byte> connectChunk = new List<byte>();
+                    connectChunk.AddRange(new ChunkHeader(0, 2, 0, 4, 5, 0).Encode());
+                    connectChunk.AddRange(BitConverter.GetBytes(5000000).Reverse());
+                    RTMPClient.stream.Write(connectChunk.ToArray(), 0, connectChunk.Count);
                     
-                    newChunk.Clear();
-                    newChunk.AddRange(new BasicHeader(0, 2).Encode());
-                    newChunk.AddRange(new ChunkHeader0(0, 5, 6, 0).Encode());
-                    newChunk.AddRange(BitConverter.GetBytes(5000000).Reverse());
-                    newChunk.Add(1);
-                    RTMPClient.stream.Write(newChunk.ToArray(), 0, newChunk.Count);
+                    connectChunk.Clear();
+                    connectChunk.AddRange(new ChunkHeader(0, 2, 0, 5, 6, 0).Encode());
+                    connectChunk.AddRange(BitConverter.GetBytes(5000000).Reverse());
+                    connectChunk.Add(1);
+                    RTMPClient.stream.Write(connectChunk.ToArray(), 0, connectChunk.Count);
                     
-                    newChunk.Clear();
-                    newChunk.AddRange(new BasicHeader(0, 2).Encode());
-                    newChunk.AddRange(new ChunkHeader0(0, 4, 1, 0).Encode());
-                    newChunk.AddRange(BitConverter.GetBytes(5000).Reverse());
-                    RTMPClient.stream.Write(newChunk.ToArray(), 0, newChunk.Count);
+                    connectChunk.Clear();
+                    connectChunk.AddRange(new ChunkHeader(0, 2, 0, 4, 1, 0).Encode());
+                    connectChunk.AddRange(BitConverter.GetBytes(5000).Reverse());
+                    RTMPClient.stream.Write(connectChunk.ToArray(), 0, connectChunk.Count);
 
-                    newChunk.Clear();
-
-                    List<byte> data = new List<byte>();
-                    data.Add(2);
-                    data.AddRange(new AMFString().Encode("_result"));
-                    data.Add(0);
-                    data.AddRange(new AMFNumber().Encode(1));
+                    connectChunk.Clear();
                     
-                    data.Add(3);
-                    data.AddRange(new AMFString().Encode("fmsVer"));
-                    data.Add(2);
-                    data.AddRange(new AMFString().Encode("FMS/3,0,1,123"));
-                    data.AddRange(new AMFString().Encode("capabilities"));
-                    data.Add(0);
-                    data.AddRange(new AMFNumber().Encode(31));
-                    data.AddRange(new byte[]{0,0,9});
-                    
-                    data.Add(3);
-                    data.AddRange(new AMFString().Encode("level"));
-                    data.Add(2);
-                    data.AddRange(new AMFString().Encode("status"));
-                    data.AddRange(new AMFString().Encode("code"));
-                    data.Add(2);
-                    data.AddRange(new AMFString().Encode("NetConnection.Connect.Success"));
-                    data.AddRange(new AMFString().Encode("description"));
-                    data.Add(2);
-                    data.AddRange(new AMFString().Encode("Connection succeeded"));
-                    data.AddRange(new AMFString().Encode("objectEncoding"));
-                    data.Add(0);
-                    data.AddRange(new AMFNumber().Encode(0));
-                    data.AddRange(new byte[]{0,0,9});
-                    
-                    newChunk.AddRange(new BasicHeader(0, 3).Encode());
-                    newChunk.AddRange(new ChunkHeader0(0, data.Count, 20, 0).Encode());
-                    newChunk.AddRange(data);
-                    RTMPClient.stream.Write(newChunk.ToArray(), 0, newChunk.Count);
+                    var connectMsg = new ConnectMessage().Encode();
+                    RTMPClient.stream.Write(connectMsg, 0, connectMsg.Length);
                 }
-                return;
+
+                if ((string) msg.Objects[0] == "createStream")
+                {
+                    List<byte> createStreamAMF = new List<byte>();
+                    List<byte> createStreamChunk = new List<byte>();
+                    createStreamAMF.Add(2);
+                    createStreamAMF.AddRange(new AMFString().Encode("_result"));
+                    createStreamAMF.Add(0);
+                    createStreamAMF.AddRange(new AMFNumber().Encode((double)msg.Objects[1]));
+                    createStreamAMF.Add(5);
+                    createStreamAMF.Add(0);
+                    createStreamAMF.AddRange(new AMFNumber().Encode(5));
+                    createStreamChunk.AddRange(new ChunkHeader(0, 3, 0, createStreamAMF.Count, 20, 0).Encode());
+                    createStreamChunk.AddRange(createStreamAMF);
+                    RTMPClient.stream.Write(createStreamChunk.ToArray(), 0, createStreamChunk.Count);
+                }
+
+                if ((string) msg.Objects[0] == "publish")
+                {
+                    List<byte> publishAMF = new List<byte>();
+                    List<byte> publishChunk = new List<byte>();
+                    publishAMF.Add(2);
+                    publishAMF.AddRange(new AMFString().Encode("onStatus"));
+                    publishAMF.Add(0);
+                    publishAMF.AddRange(new AMFNumber().Encode(0));
+                    publishAMF.Add(5);
+
+                    publishAMF.Add(3);
+                    publishAMF.AddRange(new AMFString().Encode("level"));
+                    publishAMF.Add(2);
+                    publishAMF.AddRange(new AMFString().Encode("status"));
+                    publishAMF.AddRange(new AMFString().Encode("code"));
+                    publishAMF.Add(2);
+                    publishAMF.AddRange(new AMFString().Encode("NetStream.Publish.Start"));
+                    publishAMF.AddRange(new AMFString().Encode("description"));
+                    publishAMF.Add(2);
+                    publishAMF.AddRange(new AMFString().Encode("Start publishing"));
+                    publishAMF.AddRange(new byte[] {0, 0, 9});
+
+                    publishChunk.AddRange(new ChunkHeader(0, 3, 0, publishAMF.Count, 20, 0).Encode());
+                    publishChunk.AddRange(publishAMF);
+                    RTMPClient.stream.Write(publishChunk.ToArray(), 0, publishChunk.Count);
+                    return;
+                }
             }
-            
-            throw new Exception("Not implemented");
         }
     }
 }

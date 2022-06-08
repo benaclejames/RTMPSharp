@@ -26,22 +26,18 @@ namespace RTMP
             var c1 = new byte[CS1.Length];
             stream.Read(c1, 0, c1.Length);
             C1 = new CS1(c1);
-            Console.WriteLine("Client sent 1536 random bytes");
             
             stream.Write(c0, 0, c0.Length); // s0
             stream.Write(c1, 0, c1.Length); // s1
-            Console.WriteLine("Sent S0 and S1");
             
             var c2 = new byte[CS2.Length];
             stream.Read(c2, 0, c2.Length);  // C2
             C2 = new CS2(c2);
-            Console.WriteLine("Recv copy of S1");
             
             // Send the same back
             stream.Write(c1, 0, c1.Length); // S2
-            Console.WriteLine("Sent S2");
                 
-            Console.WriteLine("Hands Shook. Parsing messages");
+            Console.WriteLine("Hands Shook. Connection Established!");
             
             // Start a new thread to call the recv method
             new Thread(() =>
@@ -58,7 +54,7 @@ namespace RTMP
                 var s2 = new byte[client.ReceiveBufferSize];
                 var len = stream.Read(s2, 0, client.ReceiveBufferSize);
                 //parse whole s2 as utf 8
-                var packet = new Packet(s2, len);
+                Packet.Parse(s2.ToList(), len);
             }
         }
     }
