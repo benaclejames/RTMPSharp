@@ -3,7 +3,7 @@ using System.Linq;
 
 namespace RTMP.RTMPCommandMessage
 {
-    public class SetPeerBandwidth : RTMPMessage
+    public class SetPeerBandwidth : ChunkHeader
     {
         public SetPeerBandwidth(int size, byte limitType) : base(0, 2, 0, 6, 0)
         {

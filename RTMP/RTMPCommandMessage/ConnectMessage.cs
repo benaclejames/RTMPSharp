@@ -7,27 +7,23 @@ namespace RTMP.RTMPCommandMessage
     {
         public ConnectMessage() : base(1)
         {
-        }
-        
-        public override void Enqueue(NetworkStream stream)
-        {
-            amf.Add(new List<AMFProperty>()
+            amf.AddRange(new List<AMFType>
             {
-                ("fmsVer", "FMS/3,0,1,123"),
-                ("capabilities", (double)31),
-                ("mode", "live"),
-                ("objectEncoding", (double)0)
+                new AMFObject(new List<(AMFString, AMFType)>
+                { 
+                    (new AMFString("fmsVer"), new AMFString("FMS/3,0,1,123")),
+                    (new AMFString("capabilities"), new AMFNumber(31)),
+                    (new AMFString("mode"), new AMFString("live")),
+                    (new AMFString("objectEncoding"), new AMFNumber(0))
+                }),
+                new AMFObject(new List<(AMFString, AMFType)>
+                {
+                    (new AMFString("level"), new AMFString("status")),
+                    (new AMFString("code"), new AMFString("NetConnection.Connect.Success")),
+                    (new AMFString("description"), new AMFString("Connection succeeded")),
+                    (new AMFString("objectEncoding"), new AMFNumber(0))
+                })
             });
-            
-            amf.Add(new List<AMFProperty>()
-            {
-                ("level", "status"),
-                ("code", "NetConnection.Connect.Success"),
-                ("description", "Connection succeeded"),
-                ("objectEncoding", (double)0)
-            });
-            
-            base.Enqueue(stream);
         }
     }
 }

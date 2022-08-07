@@ -5,9 +5,10 @@ using RTMP.RTMPCommandMessage;
 
 namespace RTMP
 {
-    public class AMFString : AMFType<string>
+    [AMFType(0x02)]
+    public class AMFString : AMFType
     {
-        public override string Parse(ref byte[] bytes)
+        public override object Parse(ref byte[] bytes)
         {
             byte[] strLen = new byte[4];
             Array.Copy(bytes, 0, strLen, 2, 2);
@@ -18,28 +19,22 @@ namespace RTMP
             return str;
         }
 
-        public override byte[] Serialize(bool withKey = true)
+        public override byte[] Serialize()
         {
-            byte[] strLen = BitConverter.GetBytes((short)Value.Length).Reverse().ToArray();
-            var strBytes = Encoding.UTF8.GetBytes(Value);
-            var bytes = new byte[strBytes.Length + (withKey ? 3 : 2)];
-            if (withKey)
-                bytes[0] = TypeByte;
-            Array.Copy(strLen, 0, bytes, withKey ? 1 : 0, strLen.Length);
-            Array.Copy(strBytes, 0, bytes, withKey ? 3 : 2, strBytes.Length);
+            byte[] strLen = BitConverter.GetBytes((short)((string)Value).Length).Reverse().ToArray();
+            var strBytes = Encoding.UTF8.GetBytes((string)Value);
+            var bytes = new byte[strBytes.Length + 2];
+            Array.Copy(strLen, 0, bytes, 0, strLen.Length);
+            Array.Copy(strBytes, 0, bytes, 2, strBytes.Length);
             return bytes;
         }
-
+        
         public AMFString(string value) : base(value)
         {
         }
         
-        public AMFString(ref byte[] data) : base("")
+        public AMFString(ref byte[] bytes) : base(ref bytes)
         {
-            if (data[0] == TypeByte)
-                data = data.Skip(1).ToArray();
-            
-            Value = Parse(ref data);
         }
     }
 }

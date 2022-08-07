@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Collections.Generic;
 using System.Linq;
 using System.Net.Sockets;
 using System.Threading;
@@ -8,6 +9,7 @@ namespace RTMP
     public class RTMPClient
     {
         public static NetworkStream stream;
+        private static Queue<RTMPSerializeable> queue = new Queue<RTMPSerializeable>();
         
         // Handshake
         private readonly CS0 _version;
@@ -50,12 +52,24 @@ namespace RTMP
         {
             while (true)
             {
-
+                FlushStream();
                 var s2 = new byte[client.ReceiveBufferSize];
                 var len = stream.Read(s2, 0, client.ReceiveBufferSize);
                 //parse whole s2 as utf 8
-                Packet.Parse(s2.ToList(), len);
+                Packet.Parse(s2, len);
             }
         }
+
+        private void FlushStream()
+        {
+            foreach (var packet in queue)
+            {
+                byte[] bytes = packet.Serialize();
+                stream.Write(bytes, 0, bytes.Length);
+            }
+            queue.Clear();
+        }
+        
+        public static void EnqueueSend(RTMPSerializeable msg) => queue.Enqueue(msg);
     }
 }

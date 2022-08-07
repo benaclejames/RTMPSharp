@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Linq;
+using RTMP.RTMPCommandMessage;
 
 namespace RTMP
 {
@@ -13,11 +14,6 @@ namespace RTMP
                     var chunkSizeBytes = chunk.Take(4).Reverse().ToArray();
                     Packet.MaxChunkSize = BitConverter.ToInt32(chunkSizeBytes, 0);
                     Console.WriteLine("Set Chunk Size: " + Packet.MaxChunkSize);
-                    break;
-                
-                case 20:    // AMF0
-                    //data = new AMFMessage(ref chunk);
-                    Console.WriteLine("AMF0");
                     break;
             }
         }

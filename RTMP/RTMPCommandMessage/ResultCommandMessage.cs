@@ -1,21 +1,21 @@
-﻿using System.Net.Sockets;
+﻿using System.Collections.Generic;
 
 namespace RTMP.RTMPCommandMessage
 {
     public class ResultCommandMessage : CommandMessage
     {
-        protected AMF0 amf = new AMF0();
+        protected List<AMFType> amf = new List<AMFType>();
 
         public ResultCommandMessage(int transactionId)
         {
-            amf.Add("_result");
-            amf.Add((double)transactionId);
+           amf.Add(new AMFString("_result"));
+           amf.Add(new AMFNumber(transactionId));
         }
-        
-        public override void Enqueue(NetworkStream stream)
+
+        public override byte[] Serialize()
         {
-            data = AMF0.Serialize(amf.Objects);
-            base.Enqueue(stream);
+            data = AMF0.Serialize(amf);
+            return base.Serialize();
         }
     }
 }
