@@ -1,51 +1,33 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using RTMP.RTMPCommandMessage;
+﻿using RTMP.RTMPCommandMessage;
 
 namespace RTMP
 {
     public static class Chunk
     {
-        public static void Decode(ChunkHeader header, byte[] data)
+        public static void Decode(PacketHandler callingHandler, ChunkHeader header, byte[] data)
         {
-            if (header.csid == 2) // Control Messages
+            if (header.ChunkStreamId == 2) // Control Messages
             {
-                ControlMessageHandler.Handle(data, header);
+                ControlMessageHandler.Handle(callingHandler, data, header);
                 return;
             }
-            
-            if (header.TypeID == 20) // AMF Encoding
+
+            if (header.TypeId == 20) // AMF Encoding
             {
                 var msg = AMF0.Decode(data);
-                string commandType = (string)msg[0].Value;
-                if (commandType == "connect")
+                var commandType = (string)msg[0].Value;
+                callingHandler.Parent.Log("Received Command: " + commandType);
+                switch (commandType) 
                 {
-                    var winAckSize = new WindowAckSize(5000000);
-                    var peerBandwidth = new SetPeerBandwidth(5000000, 1);
-                    var setChunkSize = new SetChunkSize(5000);
-                    var connectMsg = new ConnectMessage();
+                    case "connect":
+                        callingHandler.Parent.EnqueueSend(new WindowAckSize(5000000));
+                        callingHandler.Parent.EnqueueSend(new SetPeerBandwidth(5000000, 1));
+                        callingHandler.SetChunkSize(50000, true);
 
-                    RTMPClient.EnqueueSend(winAckSize);
-                    RTMPClient.EnqueueSend(peerBandwidth);
-                    RTMPClient.EnqueueSend(setChunkSize);
-                    RTMPClient.EnqueueSend(connectMsg);
-                    return;
+                        var connectMsg = new ConnectMessage();
+                        callingHandler.Parent.EnqueueSend(connectMsg);
+                        break;
                 }
-                //var command = (string) msg.Objects[0].GetValue;
-                /* Console.WriteLine("Received AMF0 Command: " + command);
-                 if (command == "connect")
-                 {
-                     var winAckSize = new WindowAckSize(5000000);
-                     var peerBandwidth = new SetPeerBandwidth(5000000, 1);
-                     var setChunkSize = new SetChunkSize(5000);
-                     var connectMsg = new ConnectMessage();
-                     
-                     winAckSize.Enqueue(RTMPClient.stream);
-                     peerBandwidth.Enqueue(RTMPClient.stream);
-                     setChunkSize.Enqueue(RTMPClient.stream);
-                     connectMsg.Enqueue(RTMPClient.stream);
-                 }*/
 
                 /* if ((string) msg.Objects[0] == "createStream")
                  {

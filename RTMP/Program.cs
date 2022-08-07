@@ -1,9 +1,5 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Net;
+﻿using System.Net;
 using System.Net.Sockets;
-using RTMP.RTMPCommandMessage;
 
 namespace RTMP
 {
@@ -20,10 +16,8 @@ namespace RTMP
                 new RTMPClient(client);
 
                 // Send the same back
-               
-                
-                
-                
+
+
                 // Recv
                 /*while (true)
                 {
@@ -37,7 +31,6 @@ namespace RTMP
                         Console.WriteLine("Connecting");
                     }
                 }*/
-
             }
         }
     }

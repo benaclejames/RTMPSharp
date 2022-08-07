@@ -5,6 +5,9 @@ namespace RTMP.RTMPCommandMessage
 {
     public class WindowAckSize : ChunkHeader
     {
-        public WindowAckSize(int size) : base(0, 2, 0, 5, 0) => data = BitConverter.GetBytes(size).Reverse().ToArray();
+        public WindowAckSize(int size) : base(0, 2, 0, 5, 0)
+        {
+            data = BitConverter.GetBytes(size).Reverse().ToArray();
+        }
     }
 }

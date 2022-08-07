@@ -6,10 +6,10 @@ namespace RTMP.RTMPCommandMessage
     {
         protected List<AMFType> amf = new List<AMFType>();
 
-        public ResultCommandMessage(int transactionId)
+        protected ResultCommandMessage(int transactionId)
         {
-           amf.Add(new AMFString("_result"));
-           amf.Add(new AMFNumber(transactionId));
+            amf.Add(new AMFString("_result"));
+            amf.Add(new AMFNumber(transactionId));
         }
 
         public override byte[] Serialize()

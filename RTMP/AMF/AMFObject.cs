@@ -7,11 +7,18 @@ namespace RTMP
     [AMFType(0x03)]
     public class AMFObject : AMFType
     {
-        
-        
+        public AMFObject(List<(AMFString, AMFType)> value) : base(value)
+        {
+        }
+
+        public AMFObject(ref byte[] data) : base(ref data)
+        {
+        }
+
+
         public override object Parse(ref byte[] bytes)
         {
-            List<(AMFString, AMFType)> obj = new List<(AMFString, AMFType)>();
+            var obj = new List<(AMFString, AMFType)>();
             while (!(bytes[0] == 0 && bytes[1] == 0 && bytes[2] == 9))
             {
                 var key = new AMFString(ref bytes);
@@ -26,6 +33,7 @@ namespace RTMP
                 bytes = args[0] as byte[];
                 obj.Add((key, amfType));
             }
+
             bytes = bytes.Skip(3).ToArray();
             return obj;
         }
@@ -36,21 +44,15 @@ namespace RTMP
             foreach (var prop in (List<(AMFString, AMFType)>)Value)
             {
                 retList.AddRange(prop.Item1.Serialize());
-                var type = prop.Item2.GetType().GetCustomAttributes(typeof(AMFTypeAttribute), false)[0] as AMFTypeAttribute;
+                var type =
+                    prop.Item2.GetType().GetCustomAttributes(typeof(AMFTypeAttribute), false)[0] as AMFTypeAttribute;
                 retList.Add(type.Type);
                 retList.AddRange(prop.Item2.Serialize());
             }
-            retList.AddRange(new byte[] {0x00, 0x00, 0x09});
+
+            retList.AddRange(new byte[] { 0x00, 0x00, 0x09 });
 
             return retList.ToArray();
-        }
-
-        public AMFObject(List<(AMFString, AMFType)> value) : base(value)
-        {
-        }
-        
-        public AMFObject(ref byte[] data) : base(ref data)
-        {
         }
     }
 }

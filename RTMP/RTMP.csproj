@@ -50,7 +50,7 @@
         <Compile Include="ChunkTypes\Handshake\CS2.cs" />
         <Compile Include="CommandMessageHandler.cs" />
         <Compile Include="ControlMessageHandler.cs" />
-        <Compile Include="Packet.cs" />
+        <Compile Include="PacketHandler.cs" />
         <Compile Include="ChunkHeader.cs" />
         <Compile Include="Chunk.cs" />
         <Compile Include="Program.cs" />

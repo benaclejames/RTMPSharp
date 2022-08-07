@@ -1,5 +1,4 @@
 ﻿using System.Collections.Generic;
-using System.Net.Sockets;
 
 namespace RTMP.RTMPCommandMessage
 {
@@ -10,7 +9,7 @@ namespace RTMP.RTMPCommandMessage
             amf.AddRange(new List<AMFType>
             {
                 new AMFObject(new List<(AMFString, AMFType)>
-                { 
+                {
                     (new AMFString("fmsVer"), new AMFString("FMS/3,0,1,123")),
                     (new AMFString("capabilities"), new AMFNumber(31)),
                     (new AMFString("mode"), new AMFString("live")),

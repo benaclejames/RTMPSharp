@@ -1,5 +1,4 @@
 ﻿using System;
-using System.Collections.Generic;
 using System.Linq;
 
 namespace RTMP
@@ -7,6 +6,14 @@ namespace RTMP
     [AMFType(0x00)]
     public class AMFNumber : AMFType
     {
+        public AMFNumber(double value) : base(value)
+        {
+        }
+
+        public AMFNumber(ref byte[] bytes) : base(ref bytes)
+        {
+        }
+
         public override object Parse(ref byte[] bytes)
         {
             var number = bytes.Take(8);
@@ -14,14 +21,9 @@ namespace RTMP
             return BitConverter.ToDouble(number.Reverse().ToArray(), 0);
         }
 
-        public override byte[] Serialize() => BitConverter.GetBytes((double)Value).Reverse().ToArray();
-
-        public AMFNumber(double value) : base(value)
+        public override byte[] Serialize()
         {
-        }
-        
-        public AMFNumber(ref byte[] bytes) : base(ref bytes)
-        {
+            return BitConverter.GetBytes((double)Value).Reverse().ToArray();
         }
     }
 }
