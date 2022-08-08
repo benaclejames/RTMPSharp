@@ -1,5 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Linq;
+using System.Net.Sockets;
 using RTMP.RTMPCommandMessage;
 
 namespace RTMP
@@ -10,37 +12,86 @@ namespace RTMP
 
         private int _maxChunkSize = 128;
         private readonly Dictionary<int, ChunkHeader> _previousHeaders = new Dictionary<int, ChunkHeader>();
+        private readonly Dictionary<int, IncompleteChunk> _incompleteChunks = new Dictionary<int, IncompleteChunk>();
 
         public PacketHandler(RTMPClient parentClient) => Parent = parentClient;
+
+        private int state = 0;
+        private int currentStreamId;
+        IncompleteChunk currentPayload = null;
         
-        public void Parse(byte[] recv, int length)
+        // Create an add or replace function
+        private void AddOrReplaceHeader(int streamId, ChunkHeader header)
         {
-            var realLength = new byte[length];
-            Array.Copy(recv, realLength, length);
-            recv = realLength;
-            while (recv.Length > 0)
+            if (_previousHeaders.ContainsKey(streamId))
+                _previousHeaders[streamId] = header;
+            else
+                _previousHeaders.Add(streamId, header);
+        }
+        
+        private void AddOrReplacePayload(int streamId, IncompleteChunk chunk)
+        {
+            if (_incompleteChunks.ContainsKey(streamId))
+                _incompleteChunks[streamId] = chunk;
+            else
+                _incompleteChunks.Add(streamId, chunk);
+        }
+
+        public void Parse(NetworkStream stream)
+        {
+            // Parse has two states, header and data. Data can only be read after header.
+            // Header is read first, then stored in the _previousHeaders dictionary.
+
+            if (state == 0)
             {
-                var header = new ChunkHeader(ref recv);
-                FillHeader(header);
+                var header = new ChunkHeader(ref stream);
+                FillHeader(ref header);
+
+                currentStreamId = header.ChunkStreamId;
+                Console.WriteLine("CSID: " + currentStreamId+", MsgType: "+(header.TypeId == 9 ? "Video" : "Audio")+", Length: " + header.MessageLength);
 
                 if (header.HeaderFormat != 3)
-                    _previousHeaders[header.ChunkStreamId] = header;
+                {
+                    var buffer = new IncompleteChunk(header.MessageLength, header.MessageLength);
+                    AddOrReplacePayload(header.ChunkStreamId, buffer);
+                    AddOrReplaceHeader(header.ChunkStreamId, header);
+                }
 
-                var lastHeader = _previousHeaders[header.ChunkStreamId];
+                currentPayload = _incompleteChunks.ContainsKey(header.ChunkStreamId)
+                    ? _incompleteChunks[header.ChunkStreamId]
+                    : null;
+                if (currentPayload == null)
+                {
+                    var previousHeader = _previousHeaders[header.ChunkStreamId];
+                    Console.WriteLine("Current payload null, previous header: "+previousHeader);
+                    currentPayload =  new IncompleteChunk(previousHeader.MessageLength, previousHeader.MessageLength);
+                    AddOrReplacePayload(header.ChunkStreamId, currentPayload);
+                    Console.WriteLine("Current payload assigned as "+currentPayload);
+                }
 
-                var msgBytes = new byte[Math.Min(lastHeader.MessageLength, _maxChunkSize)];
-                Array.Copy(recv, 0, msgBytes, 0, msgBytes.Length);
-                var newBytes = new byte[recv.Length - msgBytes.Length];
-                Array.Copy(recv, msgBytes.Length, newBytes, 0, recv.Length - msgBytes.Length);
-                recv = newBytes;
+                state = 1;
+            }
+            else if (state == 1)
+            {
+                byte[] finalBytes = new byte[Math.Min(currentPayload.WriteableBytes(), _maxChunkSize)];
+                var readBytes = stream.Read(finalBytes, 0, finalBytes.Length);
+                if (finalBytes.Length != readBytes)
+                    throw new Exception("Did not read all bytes");
+                currentPayload.Write(finalBytes, finalBytes.Length);
+                state = 0;
 
-                var currentHeader = _previousHeaders[header.ChunkStreamId];
+                if (currentPayload.IsWriteable())
+                    return;
 
-                Chunk.Decode(this, currentHeader, msgBytes);
+                _incompleteChunks.Remove(currentStreamId);
+
+                var header = _previousHeaders[currentStreamId];
+
+                Chunk.Decode(this, header, currentPayload.bytes);
             }
         }
 
-        private void FillHeader(ChunkHeader header)
+        private void FillHeader(ref ChunkHeader header)
         {
             if (!_previousHeaders.ContainsKey(header.ChunkStreamId))
                 return;

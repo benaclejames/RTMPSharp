@@ -50,6 +50,7 @@
         <Compile Include="ChunkTypes\Handshake\CS2.cs" />
         <Compile Include="CommandMessageHandler.cs" />
         <Compile Include="ControlMessageHandler.cs" />
+        <Compile Include="IncompleteChunk.cs" />
         <Compile Include="PacketHandler.cs" />
         <Compile Include="ChunkHeader.cs" />
         <Compile Include="Chunk.cs" />
@@ -58,6 +59,8 @@
         <Compile Include="RTMPClient.cs" />
         <Compile Include="RTMPCommandMessage\CommandMessage.cs" />
         <Compile Include="RTMPCommandMessage\ConnectMessage.cs" />
+        <Compile Include="RTMPCommandMessage\CreateStreamResponse.cs" />
+        <Compile Include="RTMPCommandMessage\OnStatusResponse.cs" />
         <Compile Include="RTMPCommandMessage\ResultCommandMessage.cs" />
         <Compile Include="RTMPCommandMessage\SetChunkSize.cs" />
         <Compile Include="RTMPCommandMessage\SetPeerBandwidth.cs" />

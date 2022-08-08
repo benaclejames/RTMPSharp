@@ -2,14 +2,16 @@
 
 namespace RTMP.RTMPCommandMessage
 {
-    public class ResultCommandMessage : CommandMessage
+    public class OnStatusResponse : CommandMessage
     {
         public List<AMFType> amf = new List<AMFType>();
 
-        protected ResultCommandMessage(int transactionId)
+        public OnStatusResponse(AMFObject info)
         {
-            amf.Add(new AMFString("_result"));
-            amf.Add(new AMFNumber(transactionId));
+            amf.Add(new AMFString("onStatus"));
+            amf.Add(new AMFNumber(0));
+            amf.Add(new AMFNull());
+            amf.Add(info);
         }
 
         public override byte[] Serialize()

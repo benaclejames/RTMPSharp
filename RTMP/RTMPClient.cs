@@ -57,10 +57,7 @@ namespace RTMP
             while (client.Connected)
             {
                 FlushStream();
-                var s2 = new byte[client.ReceiveBufferSize];
-                var len = _stream.Read(s2, 0, client.ReceiveBufferSize);
-                //parse whole s2 as utf 8
-                _packetHandler.Parse(s2, len);
+                _packetHandler.Parse(_stream);
             }
         }
 

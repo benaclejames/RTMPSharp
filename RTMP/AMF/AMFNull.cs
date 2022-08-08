@@ -5,7 +5,7 @@ namespace RTMP
     [AMFType(0x05)]
     public class AMFNull : AMFType
     {
-        public AMFNull(object value) : base(value)
+        public AMFNull() : base(null)
         {
         }
 

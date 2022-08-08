@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Net.Sockets;
 
 namespace RTMP
 {
@@ -15,7 +16,7 @@ namespace RTMP
         public int TimestampDelta;
         public short TypeId;
 
-        public ChunkHeader(ref byte[] bytes) => Parse(ref bytes);
+        public ChunkHeader(ref NetworkStream stream) => Parse(ref stream);
 
         protected ChunkHeader(int headerFormat, int chunkStreamId, int timestamp, short typeID, int messageStreamId)
         {
@@ -47,23 +48,27 @@ namespace RTMP
 
         public object Parse(ref byte[] bytes)
         {
-            var offset = 0;
-            var fmtByte = bytes[offset];
-            offset++;
+            throw new NotImplementedException();
+        }
+
+        public object Parse(ref NetworkStream stream)
+        {
+            var fmtByte = stream.ReadByte();
             var fmt = (fmtByte & 0xff) >> 6;
+            // Ensure fmt is 0-3
+            if (fmt > 3)
+                throw new Exception("Invalid header format");
             var csid = fmtByte & 0x3f;
 
             if (csid == 0)
             {
-                csid = bytes[offset] & (0xff + 64);
-                offset++;
+                csid = stream.ReadByte() & (0xff + 64);
             }
             else if (csid == 1)
             {
-                var secondByte = bytes[offset];
-                var thirdByte = bytes[offset + 1];
+                var secondByte = stream.ReadByte();
+                var thirdByte = stream.ReadByte();
                 csid = (thirdByte & 0xff) << (8 + (secondByte & 0xff) + 64);
-                offset += 2;
             }
 
             ChunkStreamId = csid;
@@ -74,50 +79,58 @@ namespace RTMP
                 case 0:
                     var intByteSize = sizeof(int);
                     var padded = new byte[intByteSize];
-                    Array.Copy(bytes.Skip(offset).Take(3).Reverse().ToArray(), 0, padded, 0, 3);
+                    var meme = new byte[3];
+                    stream.Read(meme, 0, 3);
+                    Array.Copy(meme.Reverse().ToArray(), 0, padded, 0, 3);
                     Timestamp = BitConverter.ToInt32(padded, 0);
-                    offset += 3;
+                    if (Timestamp == 0xffffff)
+                        Console.WriteLine("AAAA");
 
                     padded = new byte[intByteSize];
-                    Array.Copy(bytes.Skip(offset).Take(3).Reverse().ToArray(), 0, padded, 0, 3);
+                    meme = new byte[3];
+                    stream.Read(meme, 0, 3);
+                    Array.Copy(meme.Reverse().ToArray(), 0, padded, 0, 3);
                     MessageLength = BitConverter.ToInt32(padded, 0);
-                    offset += 3;
 
-                    TypeId = (short)(bytes[offset] & 0xff);
-                    offset += 1;
+                    TypeId = (short)(stream.ReadByte() & 0xff);
 
-                    MessageStreamId = BitConverter.ToInt32(bytes.Skip(offset).Take(4).Reverse().ToArray(), 0);
-                    offset += 4;
+                    byte[] messageStreamId = new byte[4];
+                    stream.Read(messageStreamId, 0, 4);
+                    MessageStreamId = BitConverter.ToInt32(messageStreamId.Reverse().ToArray(), 0);
+                    
                     break;
 
                 case 1:
                     var intByteSize2 = sizeof(int);
                     var padded2 = new byte[intByteSize2];
-                    Array.Copy(bytes.Skip(offset).Take(3).Reverse().ToArray(), 0, padded2, 0, 3);
+                    var meme2 = new byte[3];
+                    stream.Read(meme2, 0, 3);
+                    Array.Copy(meme2.Reverse().ToArray(), 0, padded2, 0, 3);
                     Timestamp = BitConverter.ToInt32(padded2, 0);
-                    offset += 3;
+                    if (Timestamp == 0xffffff)
+                        Console.WriteLine("AAAA");
 
                     padded2 = new byte[intByteSize2];
-                    Array.Copy(bytes.Skip(offset).Take(3).Reverse().ToArray(), 0, padded2, 0, 3);
+                    meme2 = new byte[3];
+                    stream.Read(meme2, 0, 3);
+                    Array.Copy(meme2.Reverse().ToArray(), 0, padded2, 0, 3);
                     MessageLength = BitConverter.ToInt32(padded2, 0);
-                    offset += 3;
 
-                    TypeId = (short)(bytes[offset] & 0xff);
-                    offset += 1;
+                    TypeId = (short)(stream.ReadByte() & 0xff);
                     break;
 
                 case 2:
                     var intByteSize3 = sizeof(int);
                     var padded3 = new byte[intByteSize3];
-                    Array.Copy(bytes.Skip(offset).Take(3).Reverse().ToArray(), 0, padded3, 0, 3);
+                    var meme3 = new byte[3];
+                    stream.Read(meme3, 0, 3);
+                    Array.Copy(meme3.Reverse().ToArray(), 0, padded3, 0, 3);
                     Timestamp = BitConverter.ToInt32(padded3, 0);
-                    offset += 3;
+                    if (Timestamp == 0xffffff)
+                        Console.WriteLine("AAAA");
                     break;
             }
 
-            var newBytes = new byte[bytes.Length - offset];
-            Array.Copy(bytes, offset, newBytes, 0, bytes.Length - offset);
-            bytes = newBytes;
             return this;
         }
     }

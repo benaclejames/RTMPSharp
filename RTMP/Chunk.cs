@@ -1,4 +1,5 @@
-﻿using RTMP.RTMPCommandMessage;
+﻿using System.Collections.Generic;
+using RTMP.RTMPCommandMessage;
 
 namespace RTMP
 {
@@ -22,10 +23,25 @@ namespace RTMP
                     case "connect":
                         callingHandler.Parent.EnqueueSend(new WindowAckSize(5000000));
                         callingHandler.Parent.EnqueueSend(new SetPeerBandwidth(5000000, 1));
-                        callingHandler.SetChunkSize(50000, true);
+                        callingHandler.Parent.EnqueueSend(new SetChunkSize(5000));
 
                         var connectMsg = new ConnectMessage();
                         callingHandler.Parent.EnqueueSend(connectMsg);
+                        break;
+                    
+                    case "createStream":
+                        var createStreamMsg = new CreateStreamResponse((int)((double)msg[1].Value));
+                        callingHandler.Parent.EnqueueSend(createStreamMsg);
+                        break;
+                    
+                    case "publish":
+                        var onPublishMessage = new OnStatusResponse(new AMFObject(new List<(AMFString, AMFType)>
+                        {
+                            (new AMFString("code"), new AMFString("NetStream.Publish.Start")),
+                            (new AMFString("level"), new AMFString("status")),
+                            (new AMFString("description"), new AMFString("Started publishing stream."))
+                        }));
+                        callingHandler.Parent.EnqueueSend(onPublishMessage);
                         break;
                 }
 
