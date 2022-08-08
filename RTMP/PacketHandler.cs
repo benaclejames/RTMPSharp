@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.IO;
 using System.Linq;
 using System.Net.Sockets;
 using RTMP.RTMPCommandMessage;
@@ -37,7 +38,7 @@ namespace RTMP
                 _incompleteChunks.Add(streamId, chunk);
         }
 
-        public void Parse(NetworkStream stream)
+        public void Parse(Stream stream)
         {
             // Parse has two states, header and data. Data can only be read after header.
             // Header is read first, then stored in the _previousHeaders dictionary.

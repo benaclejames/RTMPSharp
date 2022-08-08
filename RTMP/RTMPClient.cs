@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.IO;
 using System.Linq;
 using System.Net.Sockets;
 using System.Threading;
@@ -20,31 +21,51 @@ namespace RTMP
             Console.Write("] ");
             Console.WriteLine(message);
         }
+
+        private Random rand = new Random();
+        
+        // Function to generate random bytes of set size
+        private byte[] GenerateRandomData(int size)
+        {
+            byte[] ret = new byte[size];
+            rand.NextBytes(ret);
+            return ret;
+        }
         
         public RTMPClient(TcpClient client)
         {
             _client = client;
             _stream = client.GetStream();
             _packetHandler = new PacketHandler(this);
+            
+            Log(_client.Available.ToString());
 
             var c0 = new byte[CS0.Length];
-            _stream.Read(c0, 0, c0.Length);
+            var readBytes = _stream.Read(c0, 0, c0.Length);
             var version = new CS0(c0);
             Log("Client requested RTMP Spec version: " + version.RTMPVersion);
 
             var c1 = new byte[CS1.Length];
-            _stream.Read(c1, 0, c1.Length);
+            readBytes = _stream.Read(c1, 0, c1.Length);
             new CS1(c1);
+            Log("Read c1");
+            
+            Log(_client.Available.ToString());
 
-            _stream.Write(c0, 0, c0.Length); // s0
-            _stream.Write(c1, 0, c1.Length); // s1
+            List<byte> resp = new List<byte>();
+            resp.Add(3);
+            resp.AddRange(new byte[]{0,0,0,0});
+            resp.AddRange(new byte[]{0,0,0,0});
+            resp.AddRange(GenerateRandomData(1536-8));
+            resp.AddRange(new byte[]{0,0,0,0});
+            resp.AddRange(new byte[]{0,0,0,0});
+            resp.AddRange(GenerateRandomData(1536-8));
+            _stream.Write(resp.ToArray(), 0, resp.Count);
 
             var c2 = new byte[CS2.Length];
             _stream.Read(c2, 0, c2.Length); // C2
             new CS2(c2);
-
-            // Send the same back
-            _stream.Write(c1, 0, c1.Length); // S2
+            Log("Read c2");
 
             Log("Hands Shook. Connection Established!");
 

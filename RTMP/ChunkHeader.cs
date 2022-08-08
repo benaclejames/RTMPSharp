@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.IO;
 using System.Linq;
 using System.Net.Sockets;
 
@@ -16,7 +17,7 @@ namespace RTMP
         public int TimestampDelta;
         public short TypeId;
 
-        public ChunkHeader(ref NetworkStream stream) => Parse(ref stream);
+        public ChunkHeader(ref Stream stream) => Parse(ref stream);
 
         protected ChunkHeader(int headerFormat, int chunkStreamId, int timestamp, short typeID, int messageStreamId)
         {
@@ -51,7 +52,7 @@ namespace RTMP
             throw new NotImplementedException();
         }
 
-        public object Parse(ref NetworkStream stream)
+        public object Parse(ref Stream stream)
         {
             var fmtByte = stream.ReadByte();
             var fmt = (fmtByte & 0xff) >> 6;
